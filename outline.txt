@@ -1,0 +1,218 @@
+Simplified Financial Literacy Roadmap App with Ticker Integration
+Project Overview
+A straightforward financial literacy web application that creates personalized financial roadmaps while teaching users about stock market basics through real ticker data. The app integrates the Gemini API to provide personalized insights about stocks and investment concepts.
+Simplified Tech Stack
+Frontend
+Framework: Vue.js 3
+
+
+CSS Framework: Tailwind CSS
+
+
+State Management: Vue's built-in Composition API
+
+
+Chart Library: Chart.js for visualizing ticker data
+
+
+Backend
+Runtime: Node.js
+
+
+API Framework: Express.js
+
+
+Authentication: Simple JWT implementation
+
+
+External APIs:
+
+
+Financial data API for real-time ticker information
+
+
+Google Gemini API for personalized explanations
+
+
+Database
+Database: MongoDB
+
+
+ODM: Mongoose
+
+
+Deployment
+Frontend Hosting: Vercel
+
+
+Backend Hosting: Render.com
+
+
+Database: MongoDB Atlas (free tier)
+
+
+Core Features (Simplified)
+1. User Onboarding
+Simple sign-up form
+
+
+Basic financial assessment (5-6 questions max)
+
+
+Goal selection from predefined options
+
+
+2. Financial Roadmap
+Generated 3-5 step roadmap based on user profile
+
+
+Simple progress tracking (complete/incomplete)
+
+
+Basic timeline visualization
+
+
+3. Ticker Education Module
+Real-time stock ticker display for major indices and popular stocks
+
+
+Basic stock information (price, change, volume)
+
+
+"Explain This Stock" feature using Gemini API to provide personalized explanations
+
+
+Simple historical charts for visual learning
+
+
+4. Gemini-Powered Personalization
+AI-generated explanations of financial concepts tailored to user's knowledge level
+
+
+Simplified stock analysis based on user's goals and risk tolerance
+
+
+Plain-language explanations of market movements and ticker data
+
+
+5. Account Organizer
+Basic list of user's financial accounts
+
+
+Simple reminders for account reviews
+
+
+Minimal data storage (account types, names, review dates)
+
+
+Simplified Data Models
+User Model
+javascript
+{
+  _id: ObjectId,
+  email: String,
+  passwordHash: String,
+  profile: {
+    name: String,
+    financialGoals: [String],
+    knowledgeLevel: String,
+    riskTolerance: String
+  },
+  roadmapProgress: [Number], // IDs of completed steps
+  watchlist: [String], // Stock tickers the user is following
+  createdAt: Date
+}
+
+Roadmap Steps Model
+javascript
+{
+  _id: ObjectId,
+  title: String,
+  description: String,
+  resources: [{ title: String, url: String, type: String }],
+  order: Number
+}
+
+Basic API Endpoints
+Authentication
+POST /api/auth/register - Create account
+
+
+POST /api/auth/login - Login user
+
+
+User & Roadmap
+GET /api/profile - Get user profile
+
+
+POST /api/profile - Update profile
+
+
+GET /api/roadmap - Get roadmap steps
+
+
+POST /api/roadmap/progress - Update progress
+
+
+Ticker Data
+GET /api/tickers - Get popular tickers
+
+
+GET /api/tickers/:symbol - Get specific ticker data
+
+
+POST /api/tickers/explain - Get Gemini-powered explanation
+
+
+GET /api/tickers/watchlist - Get user's watchlist
+
+
+POST /api/tickers/watchlist - Add ticker to watchlist
+
+
+Accounts
+GET /api/accounts - Get accounts
+
+
+POST /api/accounts - Add account
+
+
+DELETE /api/accounts/:id - Remove account
+
+
+Gemini API Integration
+The app will use Google's Gemini API to:
+Generate personalized explanations of financial concepts based on user's knowledge level
+
+
+Provide plain-language analysis of specific stocks the user is interested in
+
+
+Create custom learning content that adapts to the user's progress and interests
+
+
+Explain market movements and ticker data in accessible terms
+
+
+Development Approach
+Start with a static Vue prototype of key screens
+
+
+Add user authentication and basic profile storage
+
+
+Implement roadmap generation logic
+
+
+Integrate ticker data API for basic stock information
+
+
+Add Gemini API for personalized explanations
+
+
+Implement account management features
+
+
+Enhance with educational resources
+
+
