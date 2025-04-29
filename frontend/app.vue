@@ -9,40 +9,42 @@
             <NuxtLink to="/watchlist" class="text-gray-700 hover:text-blue-600">Watchlist</NuxtLink>
             
             <!-- Show Login link if not authenticated -->
-            <template v-if="!isAuthenticated">
-              <NuxtLink to="/login" class="text-gray-700 hover:text-blue-600">Login</NuxtLink>
-            </template>
-            
-            <!-- Show user menu if authenticated -->
-            <div v-else class="relative inline-block text-left">
-              <button 
-                ref="userMenuButton" 
-                @click="toggleUserMenu" 
-                class="flex items-center text-gray-700 hover:text-blue-600 focus:outline-none"
-              >
-                <span class="mr-1">Account</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+            <client-only>
+              <template v-if="!isAuthenticated">
+                <NuxtLink to="/login" class="text-gray-700 hover:text-blue-600">Login</NuxtLink>
+              </template>
               
-              <!-- Dropdown menu -->
-              <div 
-                ref="userMenuDropdown"
-                v-if="userMenuOpen"
-                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
-              >
-                <div class="py-1">
-                  <NuxtLink to="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</NuxtLink>
-                  <button 
-                    @click="handleLogout" 
-                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
+              <!-- Show user menu if authenticated -->
+              <div v-else class="relative inline-block text-left">
+                <button 
+                  ref="userMenuButton" 
+                  @click="toggleUserMenu" 
+                  class="flex items-center text-gray-700 hover:text-blue-600 focus:outline-none"
+                >
+                  <span class="mr-1">Account</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <!-- Dropdown menu -->
+                <div 
+                  ref="userMenuDropdown"
+                  v-if="userMenuOpen"
+                  class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                >
+                  <div class="py-1">
+                    <NuxtLink to="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</NuxtLink>
+                    <button 
+                      @click="handleLogout" 
+                      class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </client-only>
           </nav>
         </div>
       </div>
@@ -55,6 +57,9 @@
         &copy; 2025 Financial Literacy. All rights reserved.
       </div>
     </footer>
+    
+    <!-- Toast Notifications Container -->
+    <ToastNotification /> 
   </div>
 </template>
 
@@ -62,6 +67,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
+import ToastNotification from '~/components/ToastNotification.vue';
 
 const router = useRouter();
 const auth = useAuth();
