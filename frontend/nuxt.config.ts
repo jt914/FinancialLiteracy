@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   // Runtime Config
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:5000/api' // Use local development server
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://financialliteracy.onrender.com/api' // Use local development server
     }
   },
   
@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   nitro: {
     devProxy: {
       '/api': {
-        target: 'http://localhost:5000/api/',
+        target: 'https://financialliteracy.onrender.com/api/',
         changeOrigin: true,
         prependPath: false
       }
