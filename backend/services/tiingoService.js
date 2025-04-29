@@ -58,21 +58,35 @@ const getTickerData = async (symbol, period = '1M') => {
   // Format startDate as YYYY-MM-DD
   const formattedStartDate = startDate.toISOString().split('T')[0];
   
-  // Determine appropriate sampling frequency based on period
+  // Determine appropriate sampling frequency and endpoint based on period
+  let apiUrl = `/tiingo/daily/${symbol}/prices`;
   let resampleFreq = 'daily';
-  if (period === '5Y') {
+  let params = {
+    startDate: formattedStartDate,
+    endDate: today,
+    resampleFreq: resampleFreq
+  };
+
+  if (period === '1D') {
+    // For 1D, use IEX intraday data (adjust endpoint and parameters)
+    apiUrl = `/iex/${symbol}/prices`;
+    // Note: Tiingo IEX intraday uses different parameters
+    // We will only specify resampleFreq and let Tiingo default the date (usually current day)
+    params = {
+      resampleFreq: '60min', // Request hourly data
+      // Removed startDate: intradayStartDate.toISOString().split('.')[0],
+      // The IEX endpoint often defaults to the current trading day's data.
+      // Providing startDate might be causing the 400 or empty data issues.
+    };
+  } else if (period === '5Y') {
     resampleFreq = 'weekly';
-  } else if (period === '1D') {
-    resampleFreq = 'hourly';
+    params.resampleFreq = resampleFreq; // Update daily params
   }
-  
-  const response = await tiingoClient.get(`/tiingo/daily/${symbol}/prices`, {
-    params: {
-      startDate: formattedStartDate,
-      endDate: today,
-      resampleFreq: resampleFreq
-    }
-  });
+  // For other periods (1W, 1M, 3M, 1Y), use daily frequency with the default daily endpoint
+
+  console.log(`Fetching Tiingo data for ${symbol}. URL: ${apiUrl}, Params:`, params); // Added logging
+
+  const response = await tiingoClient.get(apiUrl, { params });
   
   // Ensure we have data
   if (!response.data || response.data.length === 0) {
