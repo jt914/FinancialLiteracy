@@ -7,38 +7,73 @@
       :options="periods"
     />
     
-    <div class="relative h-72 bg-white rounded-lg p-2">
-      <!-- Placeholder for when there's no data -->
+    <div class="relative h-72 bg-white">
+      <!-- Placeholder for when we implement a real chart library -->
       <div v-if="!priceData.length" class="h-full flex items-center justify-center">
         <p class="text-gray-500">No price data available</p>
       </div>
       
-      <div v-else-if="loading" class="h-full flex items-center justify-center">
-        <div class="animate-pulse flex flex-col items-center">
-          <div class="h-8 w-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mb-2"></div>
-          <p class="text-gray-500">Loading chart data...</p>
-        </div>
-      </div>
-      
       <div v-else class="h-full">
-        <LineChart
-          :chartData="chartData"
-          :options="chartOptions"
-          class="h-full w-full"
-        />
+        <!-- Simple price visualization with improved styling -->
+        <div class="relative h-full">
+          <!-- Price Change Indicator Line -->
+          <div 
+            v-if="priceData.length && typeof priceData[0].close === 'number'"
+            class="absolute left-0 right-0 h-px" 
+            :style="{
+              backgroundColor: 'rgba(107, 114, 128, 0.3)',
+              top: `${calculateBarHeight(priceData[0].close)}%`
+            }"
+          ></div>
+          
+          <!-- Chart Area -->
+          <div class="absolute left-0 top-0 right-0 bottom-0 flex items-end">
+            <div 
+              v-for="(point, index) in validPriceData" 
+              :key="index"
+              :style="{
+                height: `${calculateBarHeight(point.close)}%`,
+                width: `${100 / validPriceData.length}%`,
+                backgroundColor: overallPriceChange >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+              }"
+              class="hover:opacity-100 transition-opacity relative group"
+            >
+              <!-- Tooltip on hover -->
+              <div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 mb-2 whitespace-nowrap z-10">
+                <div>Date: {{ formatDate(point.date) }}</div>
+                <div>Open: ${{ formatPrice(point.open) }}</div>
+                <div>High: ${{ formatPrice(point.high) }}</div>
+                <div>Low: ${{ formatPrice(point.low) }}</div>
+                <div>Close: ${{ formatPrice(point.close) }}</div>
+                <div>Volume: {{ formatVolume(point.volume) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Price Range Indicators -->
+        <div class="absolute right-0 top-0 text-xs text-gray-500 bg-white bg-opacity-75 px-1 rounded">
+          ${{ formatPrice(maxPrice) }}
+        </div>
+        <div class="absolute right-0 bottom-0 text-xs text-gray-500 bg-white bg-opacity-75 px-1 rounded">
+          ${{ formatPrice(minPrice) }}
+        </div>
+        
+        <!-- X-axis dates (first and last) -->
+        <div v-if="priceData.length" class="absolute left-0 bottom-0 text-xs text-gray-500 -mb-5">
+          {{ formatDate(priceData[0]?.date) }}
+        </div>
+        <div v-if="priceData.length" class="absolute right-0 bottom-0 text-xs text-gray-500 -mb-5">
+          {{ formatDate(priceData[priceData.length - 1]?.date) }}
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import ChartPeriodControls from '~/components/ChartPeriodControls.vue';
-import { Line as LineChart } from 'vue-chartjs';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
-
-// Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const props = defineProps({
   priceData: {
@@ -61,19 +96,13 @@ const periods = [
   { label: '5Y', value: '5Y' }
 ];
 
-const selectedPeriod = ref(props.initialPeriod);
-const loading = ref(false);
+const selectedPeriod = ref(props.initialPeriod); // Use initialPeriod as starting point
 const emit = defineEmits(['period-change']);
 
 // Handler for period changes
 const handlePeriodChange = (period) => {
-  loading.value = true;
   selectedPeriod.value = period;
   emit('period-change', period);
-  // Reset loading after a brief delay to show the loading state
-  setTimeout(() => {
-    loading.value = false;
-  }, 500);
 };
 
 // Filter out invalid price data points
@@ -83,166 +112,46 @@ const validPriceData = computed(() => {
     point && 
     typeof point.close === 'number' && 
     typeof point.date !== 'undefined'
-  ).sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure data is sorted by date
+  );
 });
 
-// Chart data formatting for Chart.js
-const chartData = computed(() => {
-  const pricePoints = validPriceData.value;
-  
-  if (!pricePoints.length) {
-    return {
-      labels: [],
-      datasets: [{
-        data: []
-      }]
-    };
-  }
-  
-  // Format dates for x-axis
-  const labels = pricePoints.map(point => formatDate(point.date));
-  
-  // Set color based on price trend
-  const firstPrice = pricePoints[0].close;
-  const lastPrice = pricePoints[pricePoints.length - 1].close;
-  const isPriceUp = lastPrice >= firstPrice;
-  
-  const gradientColor = isPriceUp ? 
-    'rgba(16, 185, 129, 0.1)' : 
-    'rgba(239, 68, 68, 0.1)';
-  
-  const lineColor = isPriceUp ? 
-    'rgba(16, 185, 129, 1)' : 
-    'rgba(239, 68, 68, 1)';
-  
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Price',
-        data: pricePoints.map(point => point.close),
-        borderColor: lineColor,
-        backgroundColor: gradientColor,
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: lineColor,
-        pointHoverBorderColor: '#fff',
-        pointHoverBorderWidth: 2,
-        tension: 0.3,
-        fill: true
-      }
-    ]
-  };
+// Calculate min and max price for scaling
+const minPrice = computed(() => {
+  if (!props.priceData || !props.priceData.length) return 0;
+  // Safely check if low exists on each item before using it
+  const validPoints = props.priceData.filter(p => typeof p.low === 'number');
+  if (!validPoints.length) return 0;
+  return Math.min(...validPoints.map(p => p.low));
 });
 
-// Chart.js options
-const chartOptions = computed(() => {
-  const pricePoints = validPriceData.value;
-  
-  // Calculate min and max with padding for y-axis
-  let min = 0;
-  let max = 100;
-  
-  if (pricePoints.length) {
-    const validLows = pricePoints.filter(p => typeof p.low === 'number').map(p => p.low);
-    const validHighs = pricePoints.filter(p => typeof p.high === 'number').map(p => p.high);
-    
-    if (validLows.length && validHighs.length) {
-      min = Math.min(...validLows);
-      max = Math.max(...validHighs);
-      
-      // Add some padding
-      const range = max - min;
-      min = Math.max(0, min - (range * 0.05));
-      max = max + (range * 0.05);
-    }
-  }
-  
-  // Format the tooltip to show more data
-  const tooltipCallback = {
-    label: function(context) {
-      const dataIndex = context.dataIndex;
-      const dataPoint = pricePoints[dataIndex];
-      
-      if (!dataPoint) return [];
-      
-      return [
-        `Price: $${formatPrice(dataPoint.close)}`,
-        `Open: $${formatPrice(dataPoint.open)}`,
-        `High: $${formatPrice(dataPoint.high)}`,
-        `Low: $${formatPrice(dataPoint.low)}`,
-        `Volume: ${formatVolume(dataPoint.volume)}`
-      ];
-    }
-  };
-  
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: tooltipCallback,
-        backgroundColor: 'rgba(30, 41, 59, 0.9)',
-        padding: 10,
-        cornerRadius: 4,
-        titleFont: {
-          size: 14,
-          weight: 'bold'
-        },
-        bodyFont: {
-          size: 12
-        }
-      }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false
-        },
-        ticks: {
-          maxTicksLimit: 8,
-          maxRotation: 0,
-          font: {
-            size: 10
-          }
-        }
-      },
-      y: {
-        grid: {
-          color: 'rgba(226, 232, 240, 0.5)'
-        },
-        min,
-        max,
-        ticks: {
-          callback: function(value) {
-            return '$' + value.toFixed(2);
-          },
-          font: {
-            size: 10
-          }
-        }
-      }
-    },
-    elements: {
-      line: {
-        borderJoinStyle: 'round'
-      }
-    },
-    interaction: {
-      mode: 'index',
-      intersect: false
-    },
-    animation: {
-      duration: 600
-    }
-  };
+const maxPrice = computed(() => {
+  if (!props.priceData || !props.priceData.length) return 100;
+  // Safely check if high exists on each item before using it
+  const validPoints = props.priceData.filter(p => typeof p.high === 'number');
+  if (!validPoints.length) return 100;
+  return Math.max(...validPoints.map(p => p.high));
 });
+
+// Calculate overall price change (for coloring)
+const overallPriceChange = computed(() => {
+  if (!props.priceData || props.priceData.length < 2) return 0;
+  // Ensure we have valid close prices at both ends
+  const firstValid = props.priceData.find(p => typeof p.close === 'number');
+  const lastValid = [...props.priceData].reverse().find(p => typeof p.close === 'number');
+  
+  if (!firstValid || !lastValid) return 0;
+  return lastValid.close - firstValid.close;
+});
+
+// Calculate the height percentage for each bar
+const calculateBarHeight = (price) => {
+  if (typeof price !== 'number') return 50; // Default to middle if price is invalid
+  if (maxPrice.value === minPrice.value) return 50;
+  // Add a small buffer to prevent bars from touching the edges
+  const range = maxPrice.value - minPrice.value;
+  const buffer = range * 0.05;
+  return ((price - (minPrice.value - buffer)) / (range + buffer * 2)) * 100;
+};
 
 // Format date for display
 const formatDate = (dateString) => {
@@ -250,17 +159,7 @@ const formatDate = (dateString) => {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return 'Invalid date';
-    
-    // Format based on selected period
-    if (selectedPeriod.value === '1D') {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (selectedPeriod.value === '1W') {
-      return date.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
-    } else if (selectedPeriod.value === '1M' || selectedPeriod.value === '3M') {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    } else {
-      return date.toLocaleDateString([], { month: 'short', year: '2-digit' });
-    }
+    return date.toLocaleDateString();
   } catch (e) {
     console.error('Error formatting date:', e);
     return 'Invalid date';
@@ -287,11 +186,6 @@ const formatVolume = (volume) => {
   }
   return volume.toString();
 };
-
-// Set loading to false after component is mounted and data received
-onMounted(() => {
-  loading.value = false;
-});
 </script>
 
 <style scoped>

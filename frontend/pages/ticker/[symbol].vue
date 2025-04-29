@@ -40,31 +40,20 @@
           <span class="text-3xl font-bold mr-2">{{ formattedPrice }}</span>
           <span 
             class="text-lg"
-            :class="{'text-green-600': priceChange > 0, 'text-red-600': priceChange < 0, 'text-gray-500': priceChange === 0}"
+            :class="{'text-green-600': priceChange > 0, 'text-red-600': priceChange < 0}"
           >
             {{ priceChange > 0 ? '+' : '' }}{{ priceChange.toFixed(2) }} ({{ priceChangePercent }})
           </span>
         </div>
-        <div class="text-sm text-gray-500 mt-1">
-          Last Updated: {{ lastUpdated }}
-        </div>
       </div>
       
       <!-- Stock Chart -->
-      <div class="mb-6 bg-white rounded-lg shadow-md p-4">
-        <div v-if="chartLoading" class="h-72 flex justify-center items-center">
-          <div class="animate-pulse flex flex-col items-center">
-            <div class="h-10 w-10 rounded-full border-3 border-blue-500 border-t-transparent animate-spin mb-3"></div>
-            <p class="text-gray-500">Loading chart data...</p>
-          </div>
-        </div>
-        <div v-else>
-          <StockChart 
-            :price-data="tickerData.prices || []"
-            :initial-period="selectedPeriod" 
-            @period-change="changePeriod"
-          />
-        </div>
+      <div class="mb-6">
+        <StockChart 
+          :price-data="tickerData.prices || []"
+          :initial-period="selectedPeriod" 
+          @period-change="changePeriod"
+        />
       </div>
       
       <!-- Company Information -->
@@ -156,7 +145,6 @@ const { addToast } = useToasts();
 
 // State
 const loading = ref(true);
-const chartLoading = ref(false);
 const error = ref(null);
 const tickerData = ref({});
 const watchlist = ref([]);
@@ -168,11 +156,7 @@ const loadingExplanation = ref(false);
 // Fetch ticker data based on selected period
 const fetchData = async () => {
   try {
-    if (selectedPeriod.value === '1D') {
-      chartLoading.value = true;
-    } else {
-      loading.value = true;
-    }
+    loading.value = true;
     error.value = null;
     
     // Get ticker data with selected period
@@ -191,24 +175,17 @@ const fetchData = async () => {
     }
     
   } catch (err) {
+    error.value = 'Failed to load ticker data. Please try again.';
     console.error(err);
-    if (selectedPeriod.value === '1D') {
-      error.value = 'Unable to load 1-day data. This may be because the market is closed or the data is not available. Please try another time period.';
-      addToast('1-day data not available, try another period', 'warning');
-    } else {
-      error.value = 'Failed to load ticker data. Please try again.';
-      addToast('Error loading ticker data', 'error');
-    }
+    addToast('Error loading ticker data', 'error');
   } finally {
     loading.value = false;
-    chartLoading.value = false;
   }
 };
 
 // Handle period change from chart component
 const changePeriod = (period) => {
   selectedPeriod.value = period;
-  chartLoading.value = true;
   fetchData();
 };
 
@@ -327,29 +304,6 @@ const parseMarkdown = (content) => {
 const parsedExplanation = computed(() => {
   if (!explanation.value || !explanation.value.explanation) return '';
   return parseMarkdown(explanation.value.explanation);
-});
-
-// Additional computed properties
-const lastUpdated = computed(() => {
-  if (!tickerData.value || !tickerData.value.prices || !tickerData.value.prices.length) {
-    return 'N/A';
-  }
-  
-  // Get the last data point
-  const latestPoint = [...tickerData.value.prices].sort((a, b) => 
-    new Date(b.date) - new Date(a.date)
-  )[0];
-  
-  if (!latestPoint || !latestPoint.date) return 'N/A';
-  
-  const date = new Date(latestPoint.date);
-  return date.toLocaleString([], {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
 });
 
 // Server-side prefetch

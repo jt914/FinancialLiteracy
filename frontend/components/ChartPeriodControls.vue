@@ -1,15 +1,12 @@
 <template>
   <div class="chart-period-controls">
-    <div class="flex justify-center space-x-1 bg-gray-100 rounded-lg p-1 shadow-inner">
+    <div class="flex justify-center bg-white rounded-lg overflow-hidden shadow-sm mb-4">
       <button 
         v-for="option in options" 
         :key="option.value"
         @click="handlePeriodChange(option.value)"
-        class="px-4 py-1.5 rounded-md transition-all duration-200 ease-in-out text-sm font-medium"
-        :class="{ 
-          'bg-white shadow text-blue-600': currentValue === option.value,
-          'text-gray-600 hover:bg-gray-200': currentValue !== option.value
-        }"
+        class="px-4 py-2 focus:outline-none"
+        :class="{ 'bg-blue-100 text-blue-700 font-medium': currentValue === option.value }"
       >
         {{ option.label }}
       </button>
@@ -68,10 +65,4 @@ onMounted(() => {
     emit('period-change', defaultValue);
   }
 });
-</script>
-
-<style scoped>
-.chart-period-controls {
-  @apply mb-4;
-}
-</style> 
+</script> 

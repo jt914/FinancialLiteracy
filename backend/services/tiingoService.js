@@ -25,36 +25,10 @@ const getTickerData = async (symbol, period = '1M') => {
   
   switch(period) {
     case '1D':
-      // For 1D data, use Tiingo's intraday endpoint instead of daily
-      try {
-        // Use intraday endpoint for 1D with 30 min intervals
-        const response = await tiingoClient.get(`/iex/${symbol}/prices`, {
-          params: {
-            startDate: today,
-            resampleFreq: '30min'
-          }
-        });
-        
-        // Transform intraday data to match the format of daily data
-        if (response.data && response.data.length) {
-          return response.data.map(item => ({
-            date: item.date,
-            open: item.open,
-            high: item.high,
-            low: item.low,
-            close: item.close,
-            volume: item.volume
-          }));
-        } else {
-          throw new Error(`No intraday data available for ${symbol}`);
-        }
-      } catch (error) {
-        console.error(`Error fetching intraday data for ${symbol}:`, error);
-        // Fallback to daily data for one day
-        startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - 1);
-        break;
-      }
+      // Get yesterday's date
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 1);
+      break;
     case '1W':
       startDate = new Date(now);
       startDate.setDate(startDate.getDate() - 7);
@@ -79,11 +53,6 @@ const getTickerData = async (symbol, period = '1M') => {
       // Default to 1M
       startDate = new Date(now);
       startDate.setMonth(startDate.getMonth() - 1);
-  }
-  
-  // If we already returned data for 1D, don't continue
-  if (period === '1D' && !startDate) {
-    return [];
   }
   
   // Format startDate as YYYY-MM-DD
