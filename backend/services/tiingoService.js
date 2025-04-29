@@ -60,31 +60,46 @@ const getTickerData = async (symbol, period = '1M') => {
   
   // Determine appropriate sampling frequency and endpoint based on period
   let apiUrl = `/tiingo/daily/${symbol}/prices`;
-  let resampleFreq = 'daily';
-  let params = {
+  let resampleFreq;
+  let params = { // Default params for daily endpoint
     startDate: formattedStartDate,
     endDate: today,
-    resampleFreq: resampleFreq
   };
 
-  if (period === '1D') {
-    // For 1D, use IEX intraday data (adjust endpoint and parameters)
-    apiUrl = `/iex/${symbol}/prices`;
-    // Note: Tiingo IEX intraday uses different parameters
-    // We will only specify resampleFreq and let Tiingo default the date (usually current day)
-    params = {
-      resampleFreq: '60min', // Request hourly data
-      // Removed startDate: intradayStartDate.toISOString().split('.')[0],
-      // The IEX endpoint often defaults to the current trading day's data.
-      // Providing startDate might be causing the 400 or empty data issues.
-    };
-  } else if (period === '5Y') {
-    resampleFreq = 'weekly';
-    params.resampleFreq = resampleFreq; // Update daily params
+  // Simplified Resampling Logic for Reliability
+  switch (period) {
+    case '1D':
+      // For 1D, use IEX intraday data with hourly frequency
+      apiUrl = `/iex/${symbol}/prices`;
+      params = {
+        resampleFreq: '5min' // Standard hourly intraday
+      };
+      break;
+    case '1W':
+    case '1M':
+    case '3M':
+      // For up to 3M, daily data is most reliable
+      resampleFreq = 'daily';
+      break;
+    case '1Y':
+    case '5Y':
+      // For 1Y and 5Y, weekly data is a reliable compromise
+      resampleFreq = 'weekly';
+      break;
+    default:
+      // Default to daily for any unexpected period
+      resampleFreq = 'daily';
+      // Ensure default start/end dates are set if we fall here
+      params.startDate = formattedStartDate; 
+      params.endDate = today;
   }
-  // For other periods (1W, 1M, 3M, 1Y), use daily frequency with the default daily endpoint
 
-  console.log(`Fetching Tiingo data for ${symbol}. URL: ${apiUrl}, Params:`, params); // Added logging
+  // Add resampleFreq to params if using the daily endpoint
+  if (apiUrl.includes('/tiingo/daily/')) {
+    params.resampleFreq = resampleFreq;
+  }
+
+  console.log(`Fetching Tiingo data for ${symbol}. Period: ${period}, URL: ${apiUrl}, Params:`, params);
 
   const response = await tiingoClient.get(apiUrl, { params });
   
