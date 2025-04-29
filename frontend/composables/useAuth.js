@@ -14,53 +14,53 @@ const initAuth = () => {
   // and fetch the user profile information
 };
 
-// Login function
-const login = async (email, password) => {
-  isLoading.value = true;
-  error.value = null;
-  
-  try {
-    const response = await apiLogin(email, password);
-    user.value = response.user;
-    isAuthenticated.value = true;
-    return response;
-  } catch (err) {
-    error.value = err.message || 'Login failed';
-    throw err;
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Register function
-const register = async (userData) => {
-  isLoading.value = true;
-  error.value = null;
-  
-  try {
-    const response = await apiRegister(userData);
-    return response;
-  } catch (err) {
-    error.value = err.message || 'Registration failed';
-    throw err;
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Logout function
-const logout = () => {
-  apiLogout();
-  user.value = null;
-  isAuthenticated.value = false;
-};
-
 // Export the auth composable
 export const useAuth = () => {
   // Initialize on first use
   if (process.client) {
     initAuth();
   }
+  
+  // Login function
+  const login = async (email, password) => {
+    isLoading.value = true;
+    error.value = null;
+    
+    try {
+      const response = await apiLogin(email, password);
+      user.value = response.user;
+      isAuthenticated.value = true;
+      return response;
+    } catch (err) {
+      error.value = err.message || 'Login failed';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  
+  // Register function
+  const register = async (userData) => {
+    isLoading.value = true;
+    error.value = null;
+    
+    try {
+      const response = await apiRegister(userData);
+      return response;
+    } catch (err) {
+      error.value = err.message || 'Registration failed';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  
+  // Logout function
+  const logout = () => {
+    apiLogout();
+    user.value = null;
+    isAuthenticated.value = false;
+  };
   
   return {
     user: readonly(user),
