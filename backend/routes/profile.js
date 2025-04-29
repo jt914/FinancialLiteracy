@@ -21,7 +21,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Update user profile
-router.post('/', auth, async (req, res) => {
+router.put('/', auth, async (req, res) => {
   try {
     const { name, financialGoals, knowledgeLevel, riskTolerance } = req.body;
     
