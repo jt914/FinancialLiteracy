@@ -99,7 +99,7 @@ const getTickerData = async (symbol, period = '1M') => {
     params.resampleFreq = resampleFreq;
   }
 
-  // console.log(`Fetching Tiingo data for ${symbol}. Period: ${period}, URL: ${apiUrl}, Params:`, params);
+  console.log(`Fetching Tiingo data for ${symbol}. Period: ${period}, URL: ${apiUrl}, Params:`, params);
 
   const response = await tiingoClient.get(apiUrl, { params });
   
